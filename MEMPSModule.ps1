@@ -404,7 +404,7 @@ function Get-DeviceLoginToken {
     Uses raw OAuth REST requests - use this with PS6/7
     .EXAMPLE
     Get-DeviceLoginToken
-    Authenticates you with the Graph API interface
+    Authenticates you with the Graph API interface as 
     .NOTES
     NAME: Get-DeviceLoginToken
     #>
@@ -412,7 +412,9 @@ function Get-DeviceLoginToken {
     [cmdletbinding()]
     
     param (
-        $clientID = 'd1ddf0e4-d672-4dae-b554-9d5bdfd93547',
+        ## Azure Cloud Shell: 1950a258-227b-4e31-a9cf-717495945fc2
+        ## Intune PowerShell: d1ddf0e4-d672-4dae-b554-9d5bdfd93547
+        $clientID = '1950a258-227b-4e31-a9cf-717495945fc2',
         $tenant = "primepulse.de",
         $resource = "https://graph.microsoft.com"
     )
@@ -1039,6 +1041,73 @@ function Exclude-DeviceConfigurationFromGroup {
 #endregion 
 
 ## Experiments from here on down
+
+#region App registration and Service Principal
+
+function Get-AADApps {
+param(
+    $authToken = $null,
+    $prefix = "https://graph.microsoft.com/v1.0/"
+)
+
+$resource = "/applications"
+
+Execute-GraphRestRequest -method "GET" -authToken $authToken -prefix $prefix -resource $resource
+
+}
+
+function Get-AADAppById {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/v1.0/",
+        $id = ""
+    )
+
+    if ($id -eq "") {
+        return "Please provied an Azure AD App ID"
+    }
+    
+    $resource = "/applications/" + $id
+
+    Execute-GraphRestRequest -method "GET" -authToken $authToken -prefix $prefix -resource $resource -onlyValues $false
+}
+
+function Add-AADApp {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/v1.0/",
+        $appObject = $null    
+    )
+
+    if ($null -eq $appObject) {
+        return "Please provide an Azure AD App description object"
+    }
+
+    $resource = "/applications"
+
+    $JSON = $appObject | ConvertTo-Json -Depth 6 
+
+    Execute-GraphRestRequest -method "POST" -authToken $authToken -prefix $prefix -resource $resource -body $JSON -onlyValues $false
+        
+}
+
+function Remove-AADAppById {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/v1.0/",
+        $id = ""
+    )
+
+    if ($id -eq "") {
+        return "Please provied an Azure AD App ID"
+    }
+    
+    $resource = "/applications/" + $id
+
+    Execute-GraphRestRequest -method "DELETE" -authToken $authToken -prefix $prefix -resource $resource -onlyValues $false
+}
+
+#endregion
 
 #region Windows Autopilot profiles
 
