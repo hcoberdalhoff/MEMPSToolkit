@@ -404,7 +404,7 @@ function Get-DeviceLoginToken {
     Uses raw OAuth REST requests - use this with PS6/7
     .EXAMPLE
     Get-DeviceLoginToken
-    Authenticates you with the Graph API interface as 
+    Authenticates you with the Graph API interface
     .NOTES
     NAME: Get-DeviceLoginToken
     #>
@@ -1044,6 +1044,7 @@ function Exclude-DeviceConfigurationFromGroup {
 
 #region App registration and Service Principal
 
+# Get App registrations
 function Get-AADApps {
 param(
     $authToken = $null,
@@ -1105,6 +1106,99 @@ function Remove-AADAppById {
     $resource = "/applications/" + $id
 
     Execute-GraphRestRequest -method "DELETE" -authToken $authToken -prefix $prefix -resource $resource -onlyValues $false
+}
+
+# Get Service Principals.. also known as "Enterprise Apps" in portal
+function Get-ServicePrincipals {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/v1.0/"
+    )
+
+    $resource = "/servicePrincipals"
+
+    Execute-GraphRestRequest -method "GET" -authToken $authToken -prefix $prefix -resource $resource
+}
+
+function Add-ServicePrincipalByAppId {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/v1.0/",
+        $id = ""
+    )
+
+    if ($id -eq "") {
+        return "Please provied an Azure AD App ID"
+    }
+    
+    $resource = "/servicePrincipals"
+
+    $JSON = @"
+{
+    "appId": "$id"
+}
+"@
+    Execute-GraphRestRequest -method "POST" -authToken $authToken -prefix $prefix -resource $resource -body $JSON -onlyValues $false
+}
+
+# List App Permissions
+function Get-ServicePrincipalAppRoleAssignmentsById {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/v1.0/",
+        $id = ""
+    )
+
+    if ($id -eq "") {
+        return "Please provied an Azure AD App ID"
+    }
+    
+    $resource = "/servicePrincipals/" + $id + "/appRoleAssignments"
+
+    Execute-GraphRestRequest -method "GET" -authToken $authToken -prefix $prefix -resource $resource
+}
+
+function Add-ServicePrincipalAppRoleAssignment {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/v1.0/",
+        $permissionObject = $null
+    )
+
+    if ($null -eq $permissionObject) {
+        return "Please provide an Enterprise App (Service Principal) permission / role assignment"
+    }
+
+    $resource = "/servicePrincipals/" + $permissionObject.principalId + "/appRoleAssignments"
+
+    $JSON = $permissionObject | ConvertTo-Json -Depth 6
+
+    Execute-GraphRestRequest -method "POST" -authToken $authToken -prefix $prefix -resource $resource -body $JSON -onlyValues $false
+}
+
+function Add-ServicePrincipalPassword {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/v1.0/",
+        $secretFriendlyName = "automation credential",
+        $servicePrincipalId = ""
+    )
+
+    if ($servicePrincipalId -eq "") {
+        return "Plese provide a service principal id"
+    }
+
+    $resource = "/servicePrincipals/" + $servicePrincipalId + "/addPassword"
+
+    $JSON = @"
+{
+    "passwordCredential": {
+        "displayName": "$secretFriendlyName"
+      }
+}
+"@
+
+    Execute-GraphRestRequest -method "POST" -authToken $authToken -resource $resource -body $JSON -onlyValues $false
 }
 
 #endregion
