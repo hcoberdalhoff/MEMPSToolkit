@@ -1,1 +1,1 @@
-Get-ChildItem -path "*.json" | % { Import-AADGroupFromFile -importFile $_.Name }
+Get-ChildItem -path "*.json" | ForEach-Object { Import-AADGroupFromFile -importFile $_.Name }

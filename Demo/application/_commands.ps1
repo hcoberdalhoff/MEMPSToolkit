@@ -9,7 +9,7 @@ $app = Add-AADApp -appObject $appDescription
 $sp = Add-ServicePrincipalByAppId -id $app.appId
 
 # Add AppRoleAssignments (App Permissions) from template
-Get-ChildItem -Path ".\approles\*.json" | % {
+Get-ChildItem -Path ".\approles\*.json" | ForEach-Object {
     $permission = Import-PolicyObject -filename $_.FullName
     Add-Member -InputObject $permission -MemberType NoteProperty -Name "principalId" -Value $sp.id
     Add-ServicePrincipalAppRoleAssignment -permissionObject $permission
