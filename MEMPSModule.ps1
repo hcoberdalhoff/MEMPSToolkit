@@ -40,7 +40,7 @@ function Save-AppLoginSecret {
     }
 }
 
-# Load Service Principal secret in an encrypted file and authenticate
+# Load Service Principal secret from an encrypted file and authenticate
 function Get-AppLoginFromFile {
     param (
         $path = $env:APPDATA + "\primepulse.de_aafd13a1-18ca-4c6a-894c-e0794214aba9.xml"
@@ -132,6 +132,19 @@ function Load-AppLoginToken {
     return $token
 }
 
+function Remove-AppLoginToken {
+    param(
+    $path = $env:APPDATA + "\PPImport_current_token.xml"
+    )
+
+    if (Test-Path -Path $path) {
+        Remove-Item -Path $path
+    } else {
+        return "File " + $path + " does not exists."
+    }
+
+}
+
 # Interactively sign in using "device login flow". No libraries or GUI needed.
 # taken/adapted from https://github.com/microsoftgraph/powershell-intune-samples
 function Get-DeviceLoginToken {
@@ -155,9 +168,11 @@ function Get-DeviceLoginToken {
     param (
         ## Azure PowerShell: 1950a258-227b-4e31-a9cf-717495945fc2
         ## Intune PowerShell: d1ddf0e4-d672-4dae-b554-9d5bdfd93547
-        $clientID = '1950a258-227b-4e31-a9cf-717495945fc2',
+        ## Private PP App: aafd13a1-18ca-4c6a-894c-e0794214aba9
+        $clientID = 'aafd13a1-18ca-4c6a-894c-e0794214aba9',
         $tenant = "primepulse.de",
-        $resource = "https://graph.microsoft.com"
+        $resource = "https://graph.microsoft.com",
+        $scope = "https://graph.microsoft.com/.default https://graph.microsoft.com/Policy.Read.All"
     )
 
     $DeviceCodeRequestParams = @{
@@ -181,7 +196,7 @@ function Get-DeviceLoginToken {
             grant_type = "urn:ietf:params:oauth:grant-type:device_code"
             code       = $DeviceCodeRequest.device_code
             client_id  = $ClientId
-            scope      = "https://graph.microsoft.com/.default https://graph.microsoft.com/Policy.Read.All"
+            scope      = $scope
         }
     }
     $TokenRequest = Invoke-RestMethod @TokenRequestParams
@@ -208,7 +223,9 @@ function Execute-GraphRestRequest {
         $resource = "deviceManagement/deviceCompliancePolicies",
         $body = $null,
         $authToken = $null,
-        $onlyValues = $true
+        $onlyValues = $true,
+        $writeToFile = $false,
+        $outFile = "default.file"
     )
     
     if ($null -eq $authToken) {
@@ -218,7 +235,11 @@ function Execute-GraphRestRequest {
         }
     }
 
-    $result = Invoke-RestMethod -Uri ($prefix + $resource) -Headers $authToken -Method $method -Body $body -ContentType "application/json"
+    if ($writeToFile) {
+        $result = Invoke-RestMethod -Uri ($prefix + $resource) -Headers $authToken -Method $method -Body $body -ContentType "application/json" -OutFile $outfile
+    } else {
+        $result = Invoke-RestMethod -Uri ($prefix + $resource) -Headers $authToken -Method $method -Body $body -ContentType "application/json"
+    }
 
     if ($onlyValues) {
         return $result.Value
@@ -1007,9 +1028,9 @@ function Get-ManagedDevices {
 
 #endregion
 
-#region (SharePoint) Sites
+#region Sites and Files (OneDrive, OneDriveFB/SharePoint)
 
-function Get-RootSite {
+function Get-SPRootSite {
     param(
         $authToken = $null,
         $prefix = "https://graph.microsoft.com/V1.0/"
@@ -1021,9 +1042,80 @@ function Get-RootSite {
     Execute-GraphRestRequest -authToken $authToken -prefix $prefix -resource $resource -method "GET" -onlyValues $false
 }
 
-#endregion
+function Get-SPAllSites {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/Beta/"
+    )
 
-#region Files (OneDrive, OneDriveFB/SharePoint)
+    $resource = '/sites'
+
+    Execute-GraphRestRequest -authToken $authToken -prefix $prefix -resource $resource -method "GET" -onlyValues $true
+}
+
+function Get-SPSite {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/V1.0/",
+        $hostname = "host.sharepoint.com",
+        $site = "MySite"
+    )
+
+    $resource = '/sites/' + $hostname + ":/sites/" + $site
+
+    Execute-GraphRestRequest -authToken $authToken -prefix $prefix -resource $resource -method "GET" -onlyValues $false
+}
+
+
+function Get-SPSiteDriveById {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/V1.0/",
+        $siteId = "000000000"
+    )
+
+    $resource = '/sites/' + $siteId + "/drive"
+
+    Execute-GraphRestRequest -authToken $authToken -prefix $prefix -resource $resource -method "GET" -onlyValues $false
+}
+
+function Get-DriveById {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/V1.0/",
+        $driveId = "000000000"
+    )
+
+    $resource = "/drives/" + $driveId
+
+    Execute-GraphRestRequest -authToken $authToken -prefix $prefix -resource $resource -method "GET" -onlyValues $false
+}
+
+function Get-DriveChildrenByPath {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/V1.0/",
+        $driveId = "000000000",
+        $path = "root"
+    )
+
+    $resource = "/drives/" + $driveId + "/" + $path + "/children"
+
+    Execute-GraphRestRequest -authToken $authToken -prefix $prefix -resource $resource -method "GET" -onlyValues $true
+}
+
+function Get-DriveItemVersions {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/V1.0/",
+        $driveId = "000000000",
+        $itemId = "111111111"
+    )
+
+    $resource = "/drives/" + $driveId + "/items/" + $itemId + "/versions"
+
+    Execute-GraphRestRequest -authToken $authToken -prefix $prefix -resource $resource -method "GET" -onlyValues $true
+}
 
 function Get-MyDrives {
     param(
@@ -1035,6 +1127,165 @@ function Get-MyDrives {
     $resource = "/me/drives"
 
     Execute-GraphRestRequest -authToken $authToken -prefix $prefix -resource $resource -method "GET"
+}
+
+#endregion
+
+#region Calendars (using Delegated Permissions)
+
+function Get-MyCalendars {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/V1.0/"
+
+    )
+
+    $resource = "/me/calendars"
+
+    Execute-GraphRestRequest -prefix $prefix -resource $resource -method "GET" -authToken $authToken -onlyValues $true
+
+}
+
+function Get-CalendarEvents {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/V1.0/",
+        $calendarId = "1111"
+    )
+
+    $resource = "/me/calendars/" + $calendarId + "/events"
+
+    Execute-GraphRestRequest -prefix $prefix -resource $resource -method "GET" -authToken $authToken -onlyValues $true
+}
+
+#endregion
+
+#region Mail (using Delegated Permissions)
+function Get-MyMails {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/V1.0/"
+
+    )
+
+    $resource = '/me/messages'
+
+    Execute-GraphRestRequest -prefix $prefix -resource $resource -method "GET" -authToken $authToken -onlyValues $true
+
+}
+#endregion
+
+function Get-MyMailById {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/V1.0/",
+        $Id = ""
+    )
+
+    $resource = '/me/messages/' + $Id + '/$value'
+
+    Execute-GraphRestRequest -prefix $prefix -resource $resource -method "GET" -authToken $authToken -onlyValues $false
+
+}
+
+
+#region Teams
+
+function Get-MyTeams {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/V1.0/"
+    )
+
+    $resource = "/me/joinedTeams"
+
+    Execute-GraphRestRequest -prefix $prefix -resource $resource -method "GET" -authToken $authToken -onlyValues $true
+}
+
+function Get-TeamsChannels {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/V1.0/",
+        $teamId = "1111" 
+    )
+
+    $resource = "/teams/" + $teamId + "/channels"
+
+    Execute-GraphRestRequest -prefix $prefix -resource $resource -method "GET" -authToken $authToken -onlyValues $true
+
+}
+
+function  Get-TeamsChannelMessages {
+    param (
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/V1.0/",
+        $teamId = "1111",
+        $channelId = "2222" 
+    )
+    
+    $resource = "/teams/" + $teamId + "/channels/" + $channelId + "/messages"
+
+    Execute-GraphRestRequest -prefix $prefix -resource $resource -method "GET" -authToken $authToken -onlyValues $true
+}
+
+
+function  Get-TeamsChannelMessageById {
+    param (
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/V1.0/",
+        $teamId = "1111",
+        $channelId = "2222",
+        $messageId = "3333" 
+    )
+    
+    $resource = "/teams/" + $teamId + "/channels/" + $channelId + "/messages/" + $messageId
+
+    Execute-GraphRestRequest -prefix $prefix -resource $resource -method "GET" -authToken $authToken -onlyValues $false
+}
+
+function  Get-TeamsChannelMessageHostedContents {
+    param (
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/V1.0/",
+        $teamId = "1111",
+        $channelId = "2222",
+        $messageId = "3333" 
+    )
+    
+    $resource = "/teams/" + $teamId + "/channels/" + $channelId + "/messages/" + $messageId + "/hostedContents"
+
+    Execute-GraphRestRequest -prefix $prefix -resource $resource -method "GET" -authToken $authToken -onlyValues $true
+}
+
+function  Get-TeamsChannelMessageHostedContentsById {
+    param (
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/beta/",
+        $teamId = "1111",
+        $channelId = "2222",
+        $messageId = "3333",
+        $hostedContentsId = "4444" 
+    )
+    
+    $resource = "/teams/" + $teamId + "/channels/" + $channelId + "/messages/" + $messageId + "/hostedContents/" + $hostedContentsId + '/$value'
+
+    Execute-GraphRestRequest -prefix $prefix -resource $resource -method "GET" -authToken $authToken -onlyValues $false -writeToFile $true -outFile "image.png"
+}
+
+
+function Get-TeamsChannelMessageReplies {
+    param (
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/V1.0/",
+        $teamId = "1111",
+        $channelId = "2222",
+        $messageId = "3333" 
+    )
+    
+    $resource = "/teams/" + $teamId + "/channels/" + $channelId + "/messages/" + $messageId + "/replies"
+
+    Execute-GraphRestRequest -prefix $prefix -resource $resource -method "GET" -authToken $authToken -onlyValues $true
+
 }
 
 #endregion
