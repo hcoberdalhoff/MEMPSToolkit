@@ -54,7 +54,7 @@ function Get-AppLoginFromSavedSecret {
     )
 
     if (-not (test-path -Path $path)) {
-        return "File not found"
+        throw "File not found"
     }
 
     $data = Import-Clixml -Path $path
