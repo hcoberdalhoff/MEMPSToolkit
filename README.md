@@ -6,6 +6,41 @@ It was designed to not use external dependencies and to purely use REST Calls.
 
 This readme and the scripts are still under heavy initial development.
 
+## Basic Concepts
+
+Where possible the `Get-` functions will return custom PowerShell objects that you can directly interact with.
+
+```powershell
+PS ~> Get-AADGroupByName -groupName "DemoGroup"
+
+id                            : 3d9609c3-c5f0-48dd-....
+deletedDateTime               :
+classification                :
+createdDateTime               : 02.12.2020 11:50:37
+creationOptions               : {ProvisionGroupHomepage, HubSiteId:00000000-0000-0000-0000-000000000000,
+                                SPSiteLanguage:1031}
+description                   : DemoGroup
+displayName                   : DemoGroup
+...
+```
+
+And, where possible you can use this object as a template to create a new object using `Add-` functions.
+
+```powershell
+# Get a template
+PS ~> $policy = Get-CompliancePolicyByName -policyName "Win10 Compliance Policy"
+# Rename and modify
+PS ~> $policy.displayName = "New Win10 Compliance Policy"
+PS ~> $policy.passwordRequired = "True"
+# Create the new policy
+PS ~> Add-CompliancePolicy -policy $policy
+```
+
+Be aware, some policies will not export / import using the "v1.0" api endpoints of Intune, but only when using "beta". 
+
+If your results are imcomplete, try appending `-prefix "https://graph.microsoft.com/beta/"` to your commands. The stable "v1.0" is default where possible.
+
+
 ## Authenticate against MS Graph
 
 ### Using a Service Principal / AppRegistration
@@ -34,3 +69,22 @@ you can then use `Get-AppLoginFromSavedSecret` to authenticate directly from tho
 ```powershell
 $token = Get-AppLoginFromSavedSecret
 ```
+With `Export-AppLoginToken` you can also store a token as default token, if you only use one identity. 
+
+```powershell
+Export-AppLoginToken -authToken $token
+```
+
+You can now ommit specifying a token for all future requests, as long as the token is valid. As already mentioned - currently there is no use of refresh tokens.
+
+## Samples
+
+In the [samples](samples/) folder you will find short scripts, demonstrating
+
+- importing / exporting compliance policies
+- importing / exporting conditional access policies
+- importing / exporting "old style" Device Configurations
+- exporting "new style" Device Settings
+- creating an AAD application
+- assigning roles/permissions to an AAD application
+- reading / creating AAD groups
