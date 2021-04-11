@@ -88,3 +88,7 @@ In the [samples](samples/) folder you will find short scripts, demonstrating
 - creating an AAD application
 - assigning roles/permissions to an AAD application
 - reading / creating AAD groups
+
+## Word of Warning
+
+This toolkit is far from complete and does not do enough errorhandling right now. Tread carefully.
