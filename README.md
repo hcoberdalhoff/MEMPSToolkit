@@ -89,6 +89,10 @@ In the [samples](samples/) folder you will find short scripts, demonstrating
 - assigning roles/permissions to an AAD application
 - reading / creating AAD groups
 
+## PSGallery
+
+This module is available in the [PowerShell Gallery](https://www.powershellgallery.com/packages/MEMPSToolkit)
+
 ## Word of Warning
 
 This toolkit is far from complete and does not do enough errorhandling right now. Tread carefully.
