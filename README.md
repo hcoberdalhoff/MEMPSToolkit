@@ -38,7 +38,7 @@ PS ~> Add-CompliancePolicy -policy $policy
 
 Be aware, some policies will not export / import using the "v1.0" api endpoints of Intune, but only when using "beta". 
 
-If your results are imcomplete, try appending `-prefix "https://graph.microsoft.com/beta/"` to your commands. The stable "v1.0" is default where possible.
+If your results are incomplete, try appending `-prefix "https://graph.microsoft.com/beta/"` to your commands. The stable "v1.0" is default where possible.
 
 
 ## Authenticate against MS Graph
@@ -75,7 +75,7 @@ With `Export-AppLoginToken` you can also store a token as default token, if you 
 Export-AppLoginToken -authToken $token
 ```
 
-You can now ommit specifying a token for all future requests, as long as the token is valid. As already mentioned - currently there is no use of refresh tokens.
+You can now omit specifying a token for all future requests, as long as the token is valid. As already mentioned - currently there is no use of refresh tokens.
 
 ## Samples
 
@@ -95,4 +95,4 @@ This module is available in the [PowerShell Gallery](https://www.powershellgalle
 
 ## Word of Warning
 
-This toolkit is far from complete and does not do enough errorhandling right now. Tread carefully.
+This toolkit is far from complete and does not do enough error handling right now. Tread carefully.
