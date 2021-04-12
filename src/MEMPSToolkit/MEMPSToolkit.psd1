@@ -46,8 +46,7 @@ Copyright = '(c) PRIMEPULSE SE and glueckkanja-GAB AG. All rights reserved.'
 
 # Description of the functionality provided by this module
 Description = 'Simple, inclomplete toolkit to interact with MS Graph. 
-It was designed to not use external dependencies and to purely use REST Calls.
-'
+It was designed to not use external dependencies and to purely use REST Calls.'
 
 # Minimum version of the PowerShell engine required by this module
 PowerShellVersion = '5.1'
@@ -186,7 +185,7 @@ PrivateData = @{
         # LicenseUri = ''
 
         # A URL to the main website for this project.
-        # ProjectUri = ''
+        ProjectUri = 'https://github.com/hcoberdalhoff/MEMPSToolkit'
 
         # A URL to an icon representing this module.
         # IconUri = ''
