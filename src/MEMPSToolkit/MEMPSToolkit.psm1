@@ -495,6 +495,24 @@ function Remove-AADGroupMember {
 
 #endregion 
 
+#region AuthMethods
+
+function Get-AADUserAuthMethods {
+    param (
+        $authToken = $null,
+        [Parameter(Mandatory = $true)]
+        [string] $userID,
+        $prefix = "https://graph.microsoft.com/V1.0/"
+    )
+
+    $resource = "users"
+
+    Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource ($resource + "/" + $userID + "/authentication/methods") -authToken $authToken -onlyValues $true
+    
+}
+
+#endregion
+
 #region Users
 
 
