@@ -17,7 +17,8 @@ function Export-AppLoginSecret {
     if ($path -eq "") {
         if ($asDefault) {
             $path = $env:APPDATA + "\MEMPSToolkit_default_login.xml"
-        } else {
+        }
+        else {
             $path = $env:APPDATA + "\" + $tenant + "_" + $clientId + ".xml"
         }
     }
@@ -404,6 +405,7 @@ function Get-AADGroupByName {
     param(
         $authToken = $null,
         $prefix = "https://graph.microsoft.com/V1.0/",
+        [Parameter(Mandatory = $true)]
         $groupName = $null
     )
 
@@ -441,6 +443,40 @@ function Add-AADGroupFromFile {
 
 }
 
+function Get-AADGroupMembers {
+    param (
+        [Parameter(Mandatory = $true)]
+        $groupID = $null,
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/V1.0/"
+    )
+
+    $resource = "groups"
+
+    Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource ($resource + "/" + $groupID + "/members") -authToken $authToken -onlyValues $true
+}
+
+function Add-GroupMember {
+    param(
+        [Parameter(Mandatory = $true)]
+        $groupID = $null,
+        [Parameter(Mandatory = $true)]
+        $userID = $null,
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/V1.0/"
+    )
+
+    $resource = "groups"
+
+    $body = @"
+{
+    "@odata.id": "https://graph.microsoft.com/v1.0/directoryObjects/$userID"
+}
+"@
+
+    Invoke-GraphRestRequest -method "POST" -prefix $prefix -resource ($resource + "/" + $groupID + "/members/`$ref") -body $body -authToken $authToken -onlyValues $false
+}
+
 #endregion 
 
 #region Users
@@ -471,7 +507,7 @@ function get-AADUserByUPN {
     
     $resource = "users"
 
-    $query =  ($resource + "?`$filter=userPrincipalName eq `'" + $userName + "`'")
+    $query = ($resource + "?`$filter=userPrincipalName eq `'" + $userName + "`'")
     if ($WhatIf) { "query: " + $prefix + $query }
 
     if (-not $WhatIf) {
@@ -976,7 +1012,7 @@ function Set-AADUserPhoto {
 
     $headers = @{
         "Authorization" = $authToken.Authorization
-        "Content-Type" = "image/jpeg"
+        "Content-Type"  = "image/jpeg"
     }
 
     Invoke-RestMethod -Uri ($prefix + $resource) -Headers $headers -Method "PUT" -Body ([Convert]::ToBase64String($photo)) 
