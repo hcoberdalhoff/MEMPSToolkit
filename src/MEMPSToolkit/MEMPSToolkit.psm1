@@ -511,6 +511,67 @@ function Get-AADUserAuthMethods {
     
 }
 
+function Get-AADUserMSAuthenticatorMethods {
+    param (
+        $authToken = $null,
+        [Parameter(Mandatory = $true)]
+        [string] $userID,
+        $prefix = "https://graph.microsoft.com/V1.0/"
+    )
+
+    $resource = "users"
+
+    Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource ($resource + "/" + $userID + "/authentication/microsoftAuthenticatorMethods") -authToken $authToken -onlyValues $true
+    
+}
+
+# These currently only work in "beta"
+function Get-AADUserPhoneAuthMethods {
+    param (
+        $authToken = $null,
+        [Parameter(Mandatory = $true)]
+        [string] $userID,
+        $prefix = "https://graph.microsoft.com/beta/"
+    )
+
+    $resource = "users"
+
+    Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource ($resource + "/" + $userID + "/authentication/phoneMethods") -authToken $authToken -onlyValues $true
+   
+}
+
+
+function Remove-AADUserMSAuthenticatorMethod {
+    param (
+        $authToken = $null,
+        [Parameter(Mandatory = $true)]
+        [string] $userID,
+        [Parameter(Mandatory = $true)]
+        [string] $authId,
+        $prefix = "https://graph.microsoft.com/V1.0/"
+    )
+
+    $resource = "users"
+    
+    Invoke-GraphRestRequest -method "DELETE" -prefix $prefix -resource ($resource + "/" + $userID + "/authentication/microsoftAuthenticatorMethods/" + $authId) -authToken $authToken -onlyValues $true
+}
+
+# Currently only works in "beta"
+function Remove-AADUserPhoneAuthMethod {
+    param (
+        $authToken = $null,
+        [Parameter(Mandatory = $true)]
+        [string] $userID,
+        [Parameter(Mandatory = $true)]
+        [string] $authId,
+        $prefix = "https://graph.microsoft.com/beta/"
+    )
+
+    $resource = "users"
+    
+    Invoke-GraphRestRequest -method "DELETE" -prefix $prefix -resource ($resource + "/" + $userID + "/authentication/phoneMethods/" + $authId) -authToken $authToken -onlyValues $true
+}
+
 #endregion
 
 #region Users
