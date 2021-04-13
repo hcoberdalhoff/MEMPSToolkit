@@ -6,6 +6,10 @@ It was designed to not use external dependencies and to purely use REST Calls.
 
 This readme and the scripts are still under heavy initial development.
 
+## Not official
+
+This is not an MS-supported project. If you want the official MS-supported PowerShell-SDK for MS Graph, please visit [https://github.com/microsoftgraph/msgraph-sdk-powershell]
+
 ## Basic Concepts
 
 Where possible the `Get-` functions will return custom PowerShell objects that you can directly interact with.
