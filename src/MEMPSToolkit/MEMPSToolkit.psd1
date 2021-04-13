@@ -109,6 +109,7 @@ FunctionsToExport = @(
     "Get-AADUsers",
     "Get-AADUserByID",
     "Get-AADUserByUPN",
+    "Get-AADUserAuthMethods",
     "Get-CompliancePolicies",
     "Get-CompliancePolicyByName",
     "Add-CompliancePolicy",
