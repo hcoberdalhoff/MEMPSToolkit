@@ -446,7 +446,7 @@ function Add-AADGroupFromFile {
 function Get-AADGroupMembers {
     param (
         [Parameter(Mandatory = $true)]
-        $groupID = $null,
+        $groupID,
         $authToken = $null,
         $prefix = "https://graph.microsoft.com/V1.0/"
     )
@@ -456,12 +456,12 @@ function Get-AADGroupMembers {
     Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource ($resource + "/" + $groupID + "/members") -authToken $authToken -onlyValues $true
 }
 
-function Add-GroupMember {
+function Add-AADGroupMember {
     param(
         [Parameter(Mandatory = $true)]
-        $groupID = $null,
+        $groupID,
         [Parameter(Mandatory = $true)]
-        $userID = $null,
+        $userID,
         $authToken = $null,
         $prefix = "https://graph.microsoft.com/V1.0/"
     )
