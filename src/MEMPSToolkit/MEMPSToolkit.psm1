@@ -109,7 +109,7 @@ function Get-AzAutomationCredLoginToken {
     param (
         $resource = "https://graph.microsoft.com",
         $tenant = "",
-        $automationCredName = "realmjoin-automation-cred"
+        $automationCredName = "RunbookStoredCred"
     )
 
     $cred = Get-AutomationPSCredential -Name $automationCredName
@@ -476,6 +476,22 @@ function Add-AADGroupMember {
 
     Invoke-GraphRestRequest -method "POST" -prefix $prefix -resource ($resource + "/" + $groupID + "/members/`$ref") -body $body -authToken $authToken -onlyValues $false
 }
+
+function Remove-AADGroupMember {
+    param(
+        [Parameter(Mandatory = $true)]
+        $groupID,
+        [Parameter(Mandatory = $true)]
+        $userID,
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/V1.0/"
+    )
+
+    $resource = "groups"
+
+    Invoke-GraphRestRequest -method "DELETE" -prefix $prefix -resource ($resource + "/" + $groupID + "/members/" + $userID + "/`$ref") -authToken $authToken -onlyValues $false
+}
+
 
 #endregion 
 
