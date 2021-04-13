@@ -449,7 +449,7 @@ function Add-AADGroupFromFile {
 function get-AADUsers {
     param(
         $authToken = $null,
-        $prefix = "https://graph.microsoft.com/V1.0/",
+        $prefix = "https://graph.microsoft.com/V1.0/"
     )
 
     $resource = "users"
