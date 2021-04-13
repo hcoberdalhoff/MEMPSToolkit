@@ -973,53 +973,6 @@ function Get-DeviceConfigurationPolicySettingsById {
 
 #endregion
 
-#region User management
-
-# Set AAD User photo. Will download photo from a given URI.
-# #FIXME Only support for logged in user OR contacts, not other users. Stays private for now.
-function Set-AADUserPhoto {
-    param(
-        $authToken = $null,
-        $prefix = "https://graph.microsoft.com/v1.0/",
-        $photoURI = "",
-        $userPrincipalName = ""
-    )
-
-    if ($photoURI -eq "") {
-        return "Please provide a publicly readably URI (URL) for the image. It needs to be jpeg, less than 4MB in size."
-    }
-
-    if ($userPrincipalName -eq "") {
-        return "Please provide a userPrincipalName to modify."
-    }
-
-    #if (Test-Path ($env:TEMP + "\photo.jpg")) {
-    #    throw ("Photo-file already exists. Will not overwrite " + $env:TEMP + "\photo.jpg")
-    #}
-
-    try {
-        #Invoke-WebRequest -Uri $photoURI -OutFile ($env:TEMP + "\photo.jpg") 
-        $photo = (Invoke-WebRequest -Uri $photoURI -UseBasicParsing).Content
-    }
-    catch {
-        Write-Error $_.Exception
-        throw ("Photo download from " + $photoURI + " failed.")
-    }
-
-    #$photo = Get-Content -Path ($env:TEMP + "\photo.jpg") -Raw
-
-    $resource = ("users/" + $userPrincipalName + '/photo/$value')
-
-    $headers = @{
-        "Authorization" = $authToken.Authorization
-        "Content-Type"  = "image/jpeg"
-    }
-
-    Invoke-RestMethod -Uri ($prefix + $resource) -Headers $headers -Method "PUT" -Body ([Convert]::ToBase64String($photo)) 
-}
-
-#endregion
-
 #region App registration and Service Principal
 
 # Get App registrations
@@ -1085,6 +1038,32 @@ function Remove-AADAppById {
 
     Invoke-GraphRestRequest -method "DELETE" -authToken $authToken -prefix $prefix -resource $resource -onlyValues $false
 }
+
+function Add-AADAppPassword {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/v1.0/",
+        $secretFriendlyName = "automation credential",
+        $appId = ""
+    )
+
+    if ($appId -eq "") {
+        return "Plese provide an application id"
+    }
+
+    $resource = "/applications/" + $appId + "/addPassword"
+
+    $JSON = @"
+    {
+        "passwordCredential": {
+            "displayName": "$secretFriendlyName"
+        }
+    }
+"@
+
+    Invoke-GraphRestRequest -method "POST" -authToken $authToken -resource $resource -body $JSON -onlyValues $false
+}
+
 
 # Get Service Principals.. also known as "Enterprise Apps" in portal
 function Get-ServicePrincipals {
