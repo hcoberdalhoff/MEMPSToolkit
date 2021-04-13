@@ -384,9 +384,10 @@ function Get-AADGroupById {
     param(
         $authToken = $null,
         $prefix = "https://graph.microsoft.com/V1.0/",
-        $resource = "groups",
         $groupId = ""
     )
+
+    $resource = "groups"
 
     if ($groupId -eq "") {
         return "Please provide a AzureAD Group ID."
@@ -398,12 +399,13 @@ function Get-AADGroupById {
 function Get-AADGroupByName {
     param(
         $authToken = $null,
+        $prefix = "https://graph.microsoft.com/V1.0/",
         $groupName = $null
     )
 
-    $groups = get-AADGroups -authToken $authToken
+    $resource = "groups"
 
-    $groups | Where-Object { $_.displayName -like $groupName }
+    Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource ($resource + "?`$filter=displayName eq `'" + $groupName + "`'") -authToken $authToken -onlyValues $true
 }
 
 function Add-AADGroupFromFile {
