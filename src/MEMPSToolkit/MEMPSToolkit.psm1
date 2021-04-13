@@ -126,6 +126,10 @@ function Export-AppLoginToken {
         [bool]$overwrite = $true
     )
 
+    if ($null -eq $authToken) {
+        throw "Please provide an AuthToken object."
+    }
+
     $encToken = ConvertTo-SecureString -String $authToken.Authorization -AsPlainText -Force
 
     if (Test-Path -Path $path) {
@@ -272,7 +276,7 @@ function Invoke-GraphRestRequest {
         }
     }
     catch {
-        Write-Error $_.Exception
+        Write-Error $_
         throw "Executing Graph Rest Call against " + $prefix + $resource + " failed. See Error Log."
     }
 
@@ -438,6 +442,58 @@ function Add-AADGroupFromFile {
 }
 
 #endregion 
+
+#region Users
+
+
+function get-AADUsers {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/V1.0/",
+    )
+
+    $resource = "users"
+
+    Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource $resource -authToken $authToken -onlyValues $true
+}
+
+function get-AADUserByUPN {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/V1.0/",
+        $userName = "",
+        [switch]$WhatIf = $false
+    )
+
+    if ($userName -eq "") {
+        throw "Please provide a user name in UPN format."
+    }
+    
+    $resource = "users"
+
+    $query =  ($resource + "?`$filter=userPrincipalName eq `'" + $userName + "`'")
+    if ($WhatIf) { "query: " + $prefix + $query }
+
+    if (-not $WhatIf) {
+        Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource $query -authToken $authToken -onlyValues $true
+    }
+}
+
+function get-AADUserByID {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/V1.0/",
+        $userID = $null
+    )
+
+    if ($userID = "") {
+        throw "Please provide a user object id"
+    }
+
+    $resource = "users"
+
+    Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource ($resource + "/" + $userID ) -authToken $authToken -onlyValues $true
+}
 
 #region Compliance Policies
 
