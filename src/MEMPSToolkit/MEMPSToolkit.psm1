@@ -5,9 +5,12 @@
 # Save a Service Principal secret in an encrypted file 
 function Export-AppLoginSecret {
     param (
-        [string]$clientId = "",
-        [string]$tenant = "",
+        [Parameter(Mandatory = $true)]
+        [string]$clientId,
+        [Parameter(Mandatory = $true)]
+        [string]$tenant,
         #String or SecureString
+        [Parameter(Mandatory = $true)]
         $secretValue,
         $path = "",
         $asDefault = $true
@@ -72,9 +75,12 @@ function Get-AppLoginFromSavedSecret {
 function Get-AppLoginToken {
     param (
         $resource = "https://graph.microsoft.com",
-        $tenant = "",
-        $clientId = "",
-        $secretValue = ""
+        [Parameter(Mandatory = $true)]
+        $tenant,
+        [Parameter(Mandatory = $true)]
+        $clientId,
+        [Parameter(Mandatory = $true)]
+        $secretValue
     )
 
     $LoginRequestParams = @{
@@ -108,7 +114,8 @@ function Get-AppLoginToken {
 function Get-AzAutomationCredLoginToken {
     param (
         $resource = "https://graph.microsoft.com",
-        $tenant = "",
+        [Parameter(Mandatory = $true)]
+        $tenant,
         $automationCredName = "RunbookStoredCred"
     )
 
@@ -122,7 +129,8 @@ function Get-AzAutomationCredLoginToken {
 # Store a current token as default token in an encrypted file. 
 function Export-AppLoginToken {
     param (
-        $authToken = $null,
+        [Parameter(Mandatory = $true)]
+        $authToken,
         $path = $env:APPDATA + "\MEMPSToolkit_default_token.xml",
         [bool]$overwrite = $true
     )
@@ -198,15 +206,13 @@ function Get-DeviceLoginToken {
     [cmdletbinding()]
     
     param (
-        $clientID = '',
-        $tenant = "",
+        [Parameter(Mandatory = $true)]
+        $clientID,
+        [Parameter(Mandatory = $true)]
+        $tenant,
         $resource = "https://graph.microsoft.com",
         $scope = "https://graph.microsoft.com/.default https://graph.microsoft.com/Policy.Read.All"
     )
-
-    if (($clientID -eq "") -or ($tenant -eq "")) {
-        return "Please provide a ClientID (AppRegistration) and Tenant name to authenticate against."
-    }
 
     $DeviceCodeRequestParams = @{
         Method = 'POST'
@@ -293,13 +299,9 @@ function Invoke-GraphRestRequest {
 # Write a JSON file from a Policy / group description object
 function Export-PolicyObjects {
     param (
+        [Parameter(Mandatory = $true)]
         [array]$policies = $null
     )
-
-    if ($null -eq $policies) {
-        "Please provide policies to export. You can acquire these i.e. using Get-CompliancePolicies"
-        return
-    }
 
     $policies | ForEach-Object {
         $name = $_.displayName -replace "[$([RegEx]::Escape([string][IO.Path]::GetInvalidFileNameChars()))]+", "_"
@@ -317,13 +319,9 @@ function Export-PolicyObjects {
 # Load a Policy / group description object from a JSON file
 function Import-PolicyObject {
     param (
-        $filename = $null
+        [Parameter(Mandatory = $true)]
+        $filename
     )
-
-    if ($null -eq $filename) {
-        "Please provide a (JSON) file containing a Policy Export. You can create those using Export-PolicyObjects"
-        return
-    }
 
     $JSON_Convert = Get-Content -Raw -Path $filename | ConvertFrom-Json -Depth 6
 
@@ -348,6 +346,7 @@ function Get-AADGroups {
 function Add-AADGroupFromObject {
     param(
         $authToken = $null,
+        [Parameter(Mandatory = $true)]
         $groupObject = $null
     )
 
@@ -360,18 +359,16 @@ function Add-AADGroupFromObject {
 function Add-AADGroup {
     param(
         $authToken = $null,
-        $displayName = "",
-        $mailNickName = "",
+        [Parameter(Mandatory = $true)]
+        $displayName,
+        [Parameter(Mandatory = $true)]
+        $mailNickName,
         $prefix = "https://graph.microsoft.com/V1.0/",
         $securityEnabled = "true",
         $mailEnabled = "false"
     )
 
     $resource = "groups"
-
-    if (($displayName -eq "") -or ($mailNickName -eq "")) {
-        return "Please provide a DisplayName and MailNickname for the new group."
-    }
 
     $groupDescription = @{
         displayName     = $displayName
@@ -389,14 +386,11 @@ function Get-AADGroupById {
     param(
         $authToken = $null,
         $prefix = "https://graph.microsoft.com/V1.0/",
+        [Parameter(Mandatory = $true)]
         $groupId = ""
     )
 
     $resource = "groups"
-
-    if ($groupId -eq "") {
-        return "Please provide a AzureAD Group ID."
-    }
 
     Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource ($resource + "/" + $groupId) -authToken $authToken -onlyValues $false
 }
