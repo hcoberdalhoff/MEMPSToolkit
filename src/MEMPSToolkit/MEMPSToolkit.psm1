@@ -300,7 +300,7 @@ function Invoke-GraphRestRequest {
 function Export-PolicyObjects {
     param (
         [Parameter(Mandatory = $true)]
-        [array]$policies = $null
+        [array]$policies
     )
 
     $policies | ForEach-Object {
@@ -564,6 +564,80 @@ function Remove-AADUserPhoneAuthMethod {
     $resource = "users"
     
     Invoke-GraphRestRequest -method "DELETE" -prefix $prefix -resource ($resource + "/" + $userID + "/authentication/phoneMethods/" + $authId) -authToken $authToken -onlyValues $true
+}
+
+# Currently only works in "beta"
+# Will fail if a phoneAuthMethod already exists.
+# TODO: support "alternateMobile" phoneType?
+function Add-AADUserPhoneAuthMethod {
+    param (
+        $authToken = $null,
+        [Parameter(Mandatory = $true)]
+        [string] $userID,
+        [Parameter(Mandatory = $true)]
+        [string] $phoneNumber,
+        $prefix = "https://graph.microsoft.com/beta/"
+    )
+
+    $resource = "users"
+
+    # Check if a phoneAuthMethod already exists
+    $method = Get-AADUserPhoneAuthMethods -userID $userID -authToken $authToken
+    if ($method) {
+        throw "User already has a phoneAuthMethod."
+    }
+
+    $body = @"
+{
+  "phoneNumber": "$phoneNumber",
+  "phoneType": "mobile"
+}
+"@
+    Invoke-GraphRestRequest -method "POST" -prefix $prefix -resource ($resource + "/" + $userID + "/authentication/phoneMethods") -body $body -authToken $authToken -onlyValues $true
+}
+
+# Currently only works in "beta"
+# Will update a phoneAuthenticationMethod to a new phone number
+function Update-AADUserPhoneAuthMethod {
+    param (
+        $authToken = $null,
+        [Parameter(Mandatory = $true)]
+        [string] $userID,
+        [string] $authId = $null,
+        [Parameter(Mandatory = $true)]
+        [string] $phoneNumber,
+        $prefix = "https://graph.microsoft.com/beta/",
+        [bool]$createIfNeeded = $false
+    )
+
+    # If no authId is given, update primary one.
+    if (-not $authId) {
+        $method = Get-AADUserPhoneAuthMethods -userID $userID -authToken $authToken
+        if ($method) {
+            $authId = ($method | Where-Object { $_.phoneType -eq "mobile" }).id
+        } else {
+            Write-Output "No phoneAuthMethod exists."
+            if ($createIfNeeded) {
+                Write-Output "Adding as new phoneAuthMethod."
+                Add-AADUserPhoneAuthMethod -authToken $authToken -userID $userID -phoneNumber $phoneNumber
+                return
+            } else {
+                throw "Can not update a non existing phoneAuthMethod. "
+            }
+            
+        }
+    }
+
+    $resource = "users"
+
+    $body = @"
+{
+  "phoneNumber": "$phoneNumber",
+  "phoneType": "mobile"
+}
+"@
+    
+    Invoke-GraphRestRequest -method "PUT" -prefix $prefix -resource ($resource + "/" + $userID + "/authentication/phoneMethods/" + $authId) -body $body -authToken $authToken -onlyValues $true
 }
 
 #endregion
