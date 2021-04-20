@@ -619,13 +619,15 @@ function Update-AADUserPhoneAuthMethod {
         $method = Get-AADUserPhoneAuthMethods -userID $userID -authToken $authToken
         if ($method) {
             $authId = ($method | Where-Object { $_.phoneType -eq "mobile" }).id
-        } else {
+        }
+        else {
             Write-Output "No phoneAuthMethod exists."
             if ($createIfNeeded) {
                 Write-Output "Adding as new phoneAuthMethod."
                 Add-AADUserPhoneAuthMethod -authToken $authToken -userID $userID -phoneNumber $phoneNumber
                 return
-            } else {
+            }
+            else {
                 throw "Can not update a non existing phoneAuthMethod. "
             }
             
@@ -675,7 +677,7 @@ function update-AadUserProperty {
 
     $resource = "users"
 
-    $body = (@{$property = $value} | ConvertTo-Json -Depth 6)
+    $body = (@{$property = $value } | ConvertTo-Json -Depth 6)
 
     Invoke-GraphRestRequest -method "PATCH" -prefix $prefix -body $body -resource ($resource + "/" + $userID) -authToken $authToken -onlyValues $false
 
@@ -712,6 +714,50 @@ function Reset-AadUserPasswordAuthMethod {
 
 #endregion
 
+#region identityProtection
+
+function get-RiskyUsers {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/v1.0"
+    )
+
+    $resource = "/identityProtection/riskyUsers"
+
+    Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource $resource -authToken $authToken -onlyValues $true
+}
+
+function set-DismissRiskyUser {
+    param(
+        $authToken = $null,
+        [Parameter(Mandatory = $true)]
+        [string]$userId, 
+        $prefix = "https://graph.microsoft.com/v1.0"
+    )
+
+    $resource = "/identityProtection/riskyUsers/dismiss"
+
+    $body = (@{ "userIds" = ([array]$userId)} | ConvertTo-Json -Depth 6 )
+    
+    Invoke-GraphRestRequest -method "POST" -prefix $prefix -resource $resource -body $body -authToken $authToken -onlyValues $false
+}
+
+function set-ConfirmCompromisedRiskyUser {
+    param(
+        $authToken = $null,
+        [Parameter(Mandatory = $true)]
+        [string]$userId, 
+        $prefix = "https://graph.microsoft.com/v1.0"
+    )
+
+    $resource = "/identityProtection/riskyUsers/confirmCompromised"
+
+    $body = (@{ "userIds" = ([array]$userId)} | ConvertTo-Json -Depth 6 )
+    
+    Invoke-GraphRestRequest -method "POST" -prefix $prefix -resource $resource -body $body -authToken $authToken -onlyValues $false
+}
+#endregion
+
 #region Users
 
 
@@ -737,16 +783,17 @@ function get-AADUserIsEnabled {
 
     $resource = "users"
 
-    $query = ($resource + "/" + $userID  + "?`$select=displayName,accountEnabled")
+    $query = ($resource + "/" + $userID + "?`$select=displayName,accountEnabled")
     if ($WhatIf) { "query: " + $prefix + $query }
 
     if (-not $WhatIf) {
-       $result = Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource $query -authToken $authToken -onlyValues $false
-       if ($result.accountEnabled -eq "True") {
-           return $true
-       } else {
-           return $false
-       }
+        $result = Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource $query -authToken $authToken -onlyValues $false
+        if ($result.accountEnabled -eq "True") {
+            return $true
+        }
+        else {
+            return $false
+        }
     }
 }
 
