@@ -660,10 +660,31 @@ function Get-AadUserPasswordAuthMethods {
     Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource ($resource + "/" + $userID + "/authentication/passwordMethods") -authToken $authToken -onlyValues $true
 }
 
+function update-AadUserProperty {
+    param (
+        $authToken = $null,
+        [Parameter(Mandatory = $true)]
+        [string] $userID,
+        [Parameter(Mandatory = $true)]
+        [string] $property,
+        # Can be a string or array
+        [Parameter(Mandatory = $true)]
+        $value,
+        $prefix = "https://graph.microsoft.com/v1.0/"
+    )
+
+    $resource = "users"
+
+    $body = (@{$property = $value} | ConvertTo-Json -Depth 6)
+
+    Invoke-GraphRestRequest -method "PATCH" -prefix $prefix -body $body -resource ($resource + "/" + $userID) -authToken $authToken -onlyValues $false
+
+}
 
 # This will reset a user's password. The new password will be returned in clear text(!). The user should immediately change that password.
 #
 # Currently only available in MS Graph BETA Api
+# Currently not supported using AppPermissions, only in delegated operation.
 function Reset-AadUserPasswordAuthMethod {
     param (
         $authToken = $null,
@@ -672,13 +693,16 @@ function Reset-AadUserPasswordAuthMethod {
         $prefix = "https://graph.microsoft.com/beta/"
     )
     
-    # Can not operate on blocked users. Check!
-    ##TODO - select=accountEnabled
-
     # Let us assume there is only one password per user, as described in https://docs.microsoft.com/en-us/graph/api/authentication-list-passwordmethods?view=graph-rest-beta&tabs=http
     $method = Get-AadUserPasswordAuthMethods -authToken $authToken -userID $userID -prefix $prefix
     if (-not $method) {
         throw "No password auth method found. Is this a regular user?"
+    }
+
+    # Can not operate on blocked users. Check!
+    if (-not (get-AADUserIsEnabled -authToken $authToken -userId $userID)) {
+        # Make sure, user is enabled
+        update-AadUserProperty -userID $userID -property "accountEnabled" -value "True" -authToken $authToken
     }
 
     $resource = "users"
