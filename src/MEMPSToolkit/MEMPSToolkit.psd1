@@ -27,7 +27,7 @@
 RootModule = 'MEMPSToolkit.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.10'
+ModuleVersion = '0.0.11'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -109,6 +109,7 @@ FunctionsToExport = @(
     "Get-AADUsers",
     "Get-AADUserByID",
     "Get-AADUserByUPN",
+    "get-AADUserIsEnabled",
     "Get-AADUserAuthMethods",
     "Get-AADUserMSAuthenticatorMethods",
     "Remove-AADUserMSAuthenticatorMethod",

@@ -283,6 +283,10 @@ function Invoke-GraphRestRequest {
         }
     }
     catch {
+        Write-Output ("StatusCode:" + $_.Exception.Response.StatusCode.value__ ) 
+        Write-Output ("StatusDescription:" + $_.Exception.Response.StatusDescription)
+        Write-Output ("Message: " + $_.Exception.Message)
+        Write-Output ("Inner Error: " + $_.ErrorDetails.Message)
         Write-Error $_
         throw "Executing Graph Rest Call against " + $prefix + $resource + " failed. See Error Log."
     }
@@ -640,6 +644,48 @@ function Update-AADUserPhoneAuthMethod {
     Invoke-GraphRestRequest -method "PUT" -prefix $prefix -resource ($resource + "/" + $userID + "/authentication/phoneMethods/" + $authId) -body $body -authToken $authToken -onlyValues $true
 }
 
+# This will reset a user's password. The new password will be returned in clear text(!). The user should immediately change that password.
+#
+# Currently only available in MS Graph BETA Api
+function Get-AadUserPasswordAuthMethods {
+    param (
+        $authToken = $null,
+        [Parameter(Mandatory = $true)]
+        [string] $userID,
+        $prefix = "https://graph.microsoft.com/beta/"
+    )
+
+    $resource = "users"
+
+    Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource ($resource + "/" + $userID + "/authentication/passwordMethods") -authToken $authToken -onlyValues $true
+}
+
+
+# This will reset a user's password. The new password will be returned in clear text(!). The user should immediately change that password.
+#
+# Currently only available in MS Graph BETA Api
+function Reset-AadUserPasswordAuthMethod {
+    param (
+        $authToken = $null,
+        [Parameter(Mandatory = $true)]
+        [string] $userID,
+        $prefix = "https://graph.microsoft.com/beta/"
+    )
+    
+    # Can not operate on blocked users. Check!
+    ##TODO - select=accountEnabled
+
+    # Let us assume there is only one password per user, as described in https://docs.microsoft.com/en-us/graph/api/authentication-list-passwordmethods?view=graph-rest-beta&tabs=http
+    $method = Get-AadUserPasswordAuthMethods -authToken $authToken -userID $userID -prefix $prefix
+    if (-not $method) {
+        throw "No password auth method found. Is this a regular user?"
+    }
+
+    $resource = "users"
+    
+    Invoke-GraphRestRequest -method "POST" -prefix $prefix -resource ($resource + "/" + $userID + "/authentication/passwordMethods/" + $method.id + "/resetPassword") -authToken $authToken -onlyValues $true
+}
+
 #endregion
 
 #region Users
@@ -656,42 +702,52 @@ function get-AADUsers {
     Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource $resource -authToken $authToken -onlyValues $true
 }
 
+function get-AADUserIsEnabled {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/V1.0/",
+        [Parameter(Mandatory = $true)]
+        $userId,
+        [switch]$WhatIf = $false
+    )
+
+    $resource = "users"
+
+    $query = ($resource + "/" + $userID  + "?`$select=displayName,accountEnabled")
+    if ($WhatIf) { "query: " + $prefix + $query }
+
+    if (-not $WhatIf) {
+       $result = Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource $query -authToken $authToken -onlyValues $false
+       if ($result.accountEnabled -eq "True") {
+           return $true
+       } else {
+           return $false
+       }
+    }
+}
+
 function get-AADUserByUPN {
     param(
         $authToken = $null,
         $prefix = "https://graph.microsoft.com/V1.0/",
-        $userName = "",
-        [switch]$WhatIf = $false
+        [Parameter(Mandatory = $true)]
+        $userName
     )
 
-    if ($userName -eq "") {
-        throw "Please provide a user name in UPN format."
-    }
-    
-    $resource = "users"
-
-    $query = ($resource + "?`$filter=userPrincipalName eq `'" + $userName + "`'")
-    if ($WhatIf) { "query: " + $prefix + $query }
-
-    if (-not $WhatIf) {
-        Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource $query -authToken $authToken -onlyValues $true
-    }
+    get-AADUserByID -authToken $authToken -prefix $prefix -userID $userName
 }
 
 function get-AADUserByID {
     param(
         $authToken = $null,
         $prefix = "https://graph.microsoft.com/V1.0/",
-        $userID = $null
+        [Parameter(Mandatory = $true)]
+        [string]$userID
     )
-
-    if ($userID = "") {
-        throw "Please provide a user object id"
-    }
 
     $resource = "users"
 
-    Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource ($resource + "/" + $userID ) -authToken $authToken -onlyValues $true
+    Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource ($resource + "/" + $userID ) -authToken $authToken -onlyValues $false
 }
 
 #region Compliance Policies
