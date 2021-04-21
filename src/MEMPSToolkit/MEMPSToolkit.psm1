@@ -712,6 +712,69 @@ function Reset-AadUserPasswordAuthMethod {
     Invoke-GraphRestRequest -method "POST" -prefix $prefix -resource ($resource + "/" + $userID + "/authentication/passwordMethods/" + $method.id + "/resetPassword") -authToken $authToken -onlyValues $true
 }
 
+# Currently only possible with beta API
+function Get-AadUserTemporaryAccessPass {
+    param (
+        $authToken = $null,
+        [Parameter(Mandatory = $true)]
+        [string] $userID,
+        $prefix = "https://graph.microsoft.com/beta/"
+    )
+
+    $resource = "users"
+
+    Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource ($resource + "/" + $userID + "/authentication/temporaryAccessPassMethods") -authToken $authToken -onlyValues $true
+}
+
+# Currently only possible with beta API
+function Remove-AadUserTemporaryAccessPass {
+    param (
+        $authToken = $null,
+        [Parameter(Mandatory = $true)]
+        [string] $userID,
+        $prefix = "https://graph.microsoft.com/beta/"
+    )
+
+    # Current assumption: A user can only have one temp. access pass. But well, be safe.
+    $authId = Get-AadUserTemporaryAccessPass -authToken $authToken -userID $userID -prefix $prefix
+
+    $resource = "users"
+
+    $authId | ForEach-Object {
+        Invoke-GraphRestRequest -method "DELETE" -prefix $prefix -resource ($resource + "/" + $userID + "/authentication/temporaryAccessPassMethods/" + $_.id) -authToken $authToken -onlyValues $true
+    }
+
+}
+
+# Currently only possible with beta API
+# Currently does not implement "delayed start time"
+function New-AadUserTemporaryAccessPass {
+    param (
+        $authToken = $null,
+        [Parameter(Mandatory = $true)]
+        [string] $userID,
+        [bool] $oneTimeUse = $false,
+        [int]$lifetimeInMinutes = "120",
+        $prefix = "https://graph.microsoft.com/beta/"
+    )
+
+    # Make sure no other temp. access pass exists
+    Remove-AadUserTemporaryAccessPass -authToken $authToken -userID $userID -prefix $prefix
+
+    $resource = "users"
+
+    $body = @{
+        "@odata.type"       = "#microsoft.graph.temporaryAccessPassAuthenticationMethod";
+        "lifetimeInMinutes" = $lifetimeInMinutes;
+        "isUsableOnce" = $oneTimeUse
+    }
+
+    $json = $body | ConvertTo-Json -Depth 6
+
+    Invoke-GraphRestRequest -method "POST" -prefix $prefix -resource ($resource + "/" + $userID + "/authentication/temporaryAccessPassMethods") -body $json -authToken $authToken -onlyValues $false
+
+}
+
 #endregion
 
 #region identityProtection
@@ -737,7 +800,7 @@ function set-DismissRiskyUser {
 
     $resource = "/identityProtection/riskyUsers/dismiss"
 
-    $body = (@{ "userIds" = ([array]$userId)} | ConvertTo-Json -Depth 6 )
+    $body = (@{ "userIds" = ([array]$userId) } | ConvertTo-Json -Depth 6 )
     
     Invoke-GraphRestRequest -method "POST" -prefix $prefix -resource $resource -body $body -authToken $authToken -onlyValues $false
 }
@@ -752,7 +815,7 @@ function set-ConfirmCompromisedRiskyUser {
 
     $resource = "/identityProtection/riskyUsers/confirmCompromised"
 
-    $body = (@{ "userIds" = ([array]$userId)} | ConvertTo-Json -Depth 6 )
+    $body = (@{ "userIds" = ([array]$userId) } | ConvertTo-Json -Depth 6 )
     
     Invoke-GraphRestRequest -method "POST" -prefix $prefix -resource $resource -body $body -authToken $authToken -onlyValues $false
 }
@@ -820,6 +883,28 @@ function get-AADUserByID {
 
     Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource ($resource + "/" + $userID ) -authToken $authToken -onlyValues $false
 }
+
+function remove-AadUserById {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/V1.0/",
+        [Parameter(Mandatory = $true)]
+        [string]$userID,
+        [switch]$force = $false
+    )
+
+    $resource = "users"
+
+    # Be really sure about this one.
+    if ($force) {
+        Invoke-GraphRestRequest -method "DELETE" -prefix $prefix -resource ($resource + "/" + $userID ) -authToken $authToken -onlyValues $false
+    }
+    else {
+        "No action taken. Use -force to enforce a user deletion."
+    }
+}
+
+#endregion
 
 #region Compliance Policies
 
