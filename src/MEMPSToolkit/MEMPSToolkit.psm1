@@ -54,7 +54,8 @@ function Export-AppLoginSecret {
 # Load Service Principal secret from an encrypted file and authenticate
 function Get-AppLoginFromSavedSecret {
     param (
-        $path = $env:APPDATA + "\MEMPSToolkit_default_login.xml"
+        $path = $env:APPDATA + "\MEMPSToolkit_default_login.xml",
+        [switch]$returnRawToken = $false
     )
 
     if (-not (test-path -Path $path)) {
@@ -67,7 +68,7 @@ function Get-AppLoginFromSavedSecret {
     $tenant = $data[1]
     $secretValue = [System.Net.NetworkCredential]::new('', $data[2]).Password
 
-    Get-AppLoginToken -tenant $tenant -clientId $clientId -secretValue $secretValue
+    Get-AppLoginToken -tenant $tenant -clientId $clientId -secretValue $secretValue -returnRawToken:$returnRawToken
 } 
 
 # Authenticate non-interactively against a service principal / app registration with app permissions. 
@@ -80,7 +81,8 @@ function Get-AppLoginToken {
         [Parameter(Mandatory = $true)]
         $clientId,
         [Parameter(Mandatory = $true)]
-        $secretValue
+        $secretValue,
+        [switch]$returnRawToken = $false
     )
 
     $LoginRequestParams = @{
@@ -102,12 +104,17 @@ function Get-AppLoginToken {
         throw "Login with MS Graph API failed. See Error Log."
     }
 
-    return @{
-        'Content-Type'  = 'application/json'
-        'Authorization' = "Bearer " + $result.access_token
-        'ExpiresOn'     = $result.expires_on
+    # If you want to use the token otherwise (e.g. Connect-MgGraph)
+    if ($returnRawToken) {
+        return $result.access_token
     }
-
+    else {
+        return @{
+            'Content-Type'  = 'application/json'
+            'Authorization' = "Bearer " + $result.access_token
+            'ExpiresOn'     = $result.expires_on
+        }
+    }
 }
 
 # Can be used in Azure Automation Runbooks to authenticate using a runbooks's stored credentials
@@ -766,7 +773,7 @@ function New-AadUserTemporaryAccessPass {
     $body = @{
         "@odata.type"       = "#microsoft.graph.temporaryAccessPassAuthenticationMethod";
         "lifetimeInMinutes" = $lifetimeInMinutes;
-        "isUsableOnce" = $oneTimeUse
+        "isUsableOnce"      = $oneTimeUse
     }
 
     $json = $body | ConvertTo-Json -Depth 6
