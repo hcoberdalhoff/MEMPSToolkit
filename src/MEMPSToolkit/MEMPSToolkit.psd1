@@ -27,7 +27,7 @@
 RootModule = 'MEMPSToolkit.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.14'
+ModuleVersion = '0.0.15'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -94,6 +94,7 @@ FunctionsToExport = @(
     "Import-AppLoginToken",
     "Remove-AppLoginToken",
     "Get-DeviceLoginToken",
+    "New-AppLoginToken",
     "Invoke-GraphRestRequest",
     "Export-PolicyObjects",
     "Import-PolicyObject",
@@ -124,6 +125,7 @@ FunctionsToExport = @(
     "New-AadUserTemporaryAccessPass",
     "Remove-AadUserTemporaryAccessPass",
     "Get-AadDevices",
+    "Disable-AadDevice",
     "get-RiskyUsers",
     "set-DismissRiskyUser",
     "set-ConfirmCompromisedRiskyUser",

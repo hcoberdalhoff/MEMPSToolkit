@@ -257,6 +257,21 @@ function Get-DeviceLoginToken {
    
 }
 
+# Convert/Load a raw bearer token into an authHeader token.
+function New-AppLoginToken {
+    param(
+    [Parameter(Mandatory = $true)]
+    [string]$rawToken
+    )
+
+    $authHeader = @{
+        'Content-Type'  = 'application/json'
+        'Authorization' = "Bearer " + $rawToken
+    }
+
+    return $authHeader
+}
+
 #endregion Authentication
 
 #region Basic API and File interaction
@@ -508,14 +523,32 @@ function Get-AadDevices {
         [string]$prefix = "https://graph.microsoft.com/V1.0/"
     )
     
-$resource = "devices"
+    $resource = "devices"
 
-if ($deviceId) {
-    $resource = $resource + "?`$filter=deviceId eq '" + $deviceId + "`'"
-}
+    if ($deviceId) {
+        $resource = $resource + "?`$filter=deviceId eq '" + $deviceId + "`'"
+    }
 
     Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource $resource -authToken $authToken -onlyValues $true
 }
+
+# Be aware - Only work with "delegated" permissions
+function Disable-AadDevice {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string] $ObjectId,
+        $authToken = $null,
+        [string]$prefix = "https://graph.microsoft.com/V1.0/"
+    )
+
+    $resource = "devices/$ObjectId"
+
+    $body = @{"accountEnabled" = $false } | ConvertTo-Json
+
+    Invoke-GraphRestRequest -method "PATCH" -prefix $prefix -resource $resource -authToken $authToken -body $body -onlyValues $false
+
+}
+
 #endregion
 
 #region AuthMethods
