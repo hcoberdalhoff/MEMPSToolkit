@@ -500,6 +500,24 @@ function Remove-AADGroupMember {
 
 #endregion 
 
+#region devices
+function Get-AadDevices {
+    param (
+        [string]$deviceId,
+        $authToken = $null,
+        [string]$prefix = "https://graph.microsoft.com/V1.0/"
+    )
+    
+$resource = "devices"
+
+if ($deviceId) {
+    $resource = $resource + "?`$filter=deviceId eq '" + $deviceId + "`'"
+}
+
+    Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource $resource -authToken $authToken -onlyValues $true
+}
+#endregion
+
 #region AuthMethods
 
 function Get-AADUserAuthMethods {
