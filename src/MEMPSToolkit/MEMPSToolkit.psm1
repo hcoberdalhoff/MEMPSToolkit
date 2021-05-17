@@ -549,6 +549,20 @@ function Disable-AadDevice {
 
 }
 
+function Remove-AadDevice {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string] $ObjectId,
+        $authToken = $null,
+        [string]$prefix = "https://graph.microsoft.com/V1.0/"
+    )
+
+    $resource = "devices/$ObjectId"
+
+    Invoke-GraphRestRequest -method "DELETE" -prefix $prefix -resource $resource -authToken $authToken -onlyValues $false
+
+}
+
 #endregion
 
 #region AuthMethods
@@ -1627,7 +1641,7 @@ function Get-ImportedMobileDevices {
 
 #endregion
 
-#region Autopilot Imported Devices
+#region Autopilot Devices
 
 function Get-ImportedAutopilotDevices {
     param(
@@ -1640,18 +1654,85 @@ function Get-ImportedAutopilotDevices {
     Invoke-GraphRestRequest -authToken $authToken -prefix $prefix -resource $resource -method "GET"
 }
 
+function Get-WindowsAutopilotDevices {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/Beta/"
+    )
+
+    $resource = "/deviceManagement/windowsAutopilotDeviceIdentities"
+
+    Invoke-GraphRestRequest -authToken $authToken -prefix $prefix -resource $resource -method "GET"
+}
+
+function Get-WindowsAutopilotDeviceByDeviceId {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$azureAdDeviceId,
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/Beta/"
+    )
+
+    ## Filtering seems not to work yet on this resource. 
+    #$resource = "/deviceManagement/windowsAutopilotDeviceIdentities`?`$filter=azureAdDeviceId eq `'$azureAdDeviceId`'"
+    #Invoke-GraphRestRequest -authToken $authToken -prefix $prefix -resource $resource -method "GET"
+
+    ## Let's do it the hard way then... 
+    Get-WindowsAutopilotDevices -authToken $authToken -prefix $prefix | Where-Object { $_.azureAdDeviceId -eq $azureAdDeviceId }
+}
+
+function Remove-WindowsAutopilotDevice {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$id,
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/Beta/"
+    )
+
+    $resource = "/deviceManagement/windowsAutopilotDeviceIdentities/$id"
+
+    Invoke-GraphRestRequest -authToken $authToken -prefix $prefix -resource $resource -method "DELETE" -onlyValues $false
+}
+
+
 #endregion
 
 #region Managed Devices
 function Get-ManagedDevices {
     param(
         $authToken = $null,
-        $prefix = "https://graph.microsoft.com/Beta/"
+        $prefix = "https://graph.microsoft.com/v1.0/"
     )
 
     $resource = "/deviceManagement/managedDevices"
 
     Invoke-GraphRestRequest -authToken $authToken -prefix $prefix -resource $resource -method "GET"
+}
+
+function Get-ManagedDeviceByDeviceId {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$azureAdDeviceId,
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/v1.0/"
+    )
+
+    $resource = "/deviceManagement/managedDevices`?`$filter=azureADDeviceId eq `'$azureAdDeviceId`'"
+
+    Invoke-GraphRestRequest -authToken $authToken -prefix $prefix -resource $resource -method "GET"
+}
+
+function Remove-ManagedDevice {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$id,
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/v1.0/"
+    )
+
+    $resource = "/deviceManagement/managedDevices/$id"
+
+    Invoke-GraphRestRequest -authToken $authToken -prefix $prefix -resource $resource -method "DELETE" -onlyValues $false
 }
 
 #endregion
