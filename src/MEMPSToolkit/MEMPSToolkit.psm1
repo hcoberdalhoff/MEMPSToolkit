@@ -75,27 +75,41 @@ function Get-AppLoginFromSavedSecret {
 # Can be used headless, no libraries needed. Recommended. 
 function Get-AppLoginToken {
     param (
-        $resource = "https://graph.microsoft.com",
         [Parameter(Mandatory = $true)]
         $tenant,
         [Parameter(Mandatory = $true)]
         $clientId,
         [Parameter(Mandatory = $true)]
         $secretValue,
-        [switch]$returnRawToken = $false
+        [switch]$returnRawToken = $false,
+        [int]$version = 2
     )
 
-    $LoginRequestParams = @{
-        Method = 'POST'
-        Uri    = "https://login.microsoftonline.com/" + $tenant + "/oauth2/token?api-version=1.0"
-        Body   = @{ 
-            grant_type    = "client_credentials"; 
-            resource      = $resource; 
-            client_id     = $clientId; 
-            client_secret = $secretValue 
+    # Which version of the auth. endpoint to use?
+    if ($version -eq 2) {
+        $LoginRequestParams = @{
+            Method = 'POST'
+            Uri    = "https://login.microsoftonline.com/" + $tenant + "/oauth2/v2.0/token"
+            Body   = @{ 
+                grant_type    = "client_credentials"; 
+                scope         = "https://graph.microsoft.com/.default"; #v2.0 needs a scope
+                client_id     = $clientId; 
+                client_secret = $secretValue 
+            }
         }
     }
-
+    else {
+        $LoginRequestParams = @{
+            Method = 'POST'
+            Uri    = "https://login.microsoftonline.com/" + $tenant + "/oauth2/token?api-version=1.0"
+            Body   = @{ 
+                grant_type    = "client_credentials"; 
+                resource      = "https://graph.microsoft.com"; #v1.0 needs a resource
+                client_id     = $clientId; 
+                client_secret = $secretValue 
+            }
+        }
+    }
     try {
         $result = Invoke-RestMethod @LoginRequestParams
     }
@@ -109,10 +123,19 @@ function Get-AppLoginToken {
         return $result.access_token
     }
     else {
-        return @{
-            'Content-Type'  = 'application/json'
-            'Authorization' = "Bearer " + $result.access_token
-            'ExpiresOn'     = $result.expires_on
+        if ($version -eq 2) {
+            return @{
+                'Content-Type'  = 'application/json'
+                'Authorization' = "Bearer " + $result.access_token
+                #'ExpiresOn'     = $result.expires_on # Not available in v2.0 endpoint
+            }    
+        }
+        else {
+            return @{
+                'Content-Type'  = 'application/json'
+                'Authorization' = "Bearer " + $result.access_token
+                'ExpiresOn'     = $result.expires_on
+            }
         }
     }
 }
@@ -260,8 +283,8 @@ function Get-DeviceLoginToken {
 # Convert/Load a raw bearer token into an authHeader token.
 function New-AppLoginToken {
     param(
-    [Parameter(Mandatory = $true)]
-    [string]$rawToken
+        [Parameter(Mandatory = $true)]
+        [string]$rawToken
     )
 
     $authHeader = @{
@@ -281,7 +304,7 @@ function Invoke-GraphRestRequest {
     param (
         $method = "GET",
         $prefix = "https://graph.microsoft.com/v1.0/",
-        $resource = "deviceManagement/deviceCompliancePolicies",
+        $resource = "users",
         $body = $null,
         $authToken = $null,
         $onlyValues = $true,
@@ -461,6 +484,22 @@ function Add-AADGroupFromFile {
         "Group " + $groupData.displayName + " exists. Will skip. "
     }
 
+}
+
+function Update-AADGroupById {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/V1.0/",
+        [Parameter(Mandatory = $true)]
+        $groupId = "",
+        $valuePairs = @{}
+    )
+
+    $resource = "groups/$groupId"
+
+    $body = $valuePairs | ConvertTo-Json
+
+    Invoke-GraphRestRequest -method "PATCH" -prefix $prefix -resource $resource -authToken $authToken -onlyValues $false -body $body
 }
 
 function Get-AADGroupMembers {

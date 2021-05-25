@@ -27,7 +27,7 @@
 RootModule = 'MEMPSToolkit.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.15'
+ModuleVersion = '0.0.17'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -104,6 +104,7 @@ FunctionsToExport = @(
     "Get-AADGroupById",
     "Get-AADGroupByName",
     "Add-AADGroupFromFile",
+    "Update-AADGroupById",
     "Get-AADGroupMembers",
     "Add-AADGroupMember",
     "Remove-AADGroupMember",
