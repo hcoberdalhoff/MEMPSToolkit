@@ -319,6 +319,12 @@ function Invoke-GraphRestRequest {
         }
     }
 
+    if ($prefix -eq "v1.0") {
+        $prefix = "https://graph.microsoft.com/v1.0/"
+    } elseif ($prefix -eq "beta") {
+        $prefix = "https://graph.microsoft.com/beta/"
+    }
+
     try {
         if ($writeToFile) {
             $result = Invoke-RestMethod -Uri ($prefix + $resource) -Headers $authToken -Method $method -Body $body -ContentType "application/json" -OutFile $outfile
@@ -681,7 +687,7 @@ function Remove-AADUserPhoneAuthMethod {
     Invoke-GraphRestRequest -method "DELETE" -prefix $prefix -resource ($resource + "/" + $userID + "/authentication/phoneMethods/" + $authId) -authToken $authToken -onlyValues $true
 }
 
-# Currently only works in "beta"
+# Currently only works with beta endpoint
 # Will fail if a phoneAuthMethod already exists.
 # TODO: support "alternateMobile" phoneType?
 function Add-AADUserPhoneAuthMethod {
@@ -1696,7 +1702,7 @@ function Get-ImportedAutopilotDevices {
 function Get-WindowsAutopilotDevices {
     param(
         $authToken = $null,
-        $prefix = "https://graph.microsoft.com/Beta/"
+        $prefix = "https://graph.microsoft.com/v1.0/"
     )
 
     $resource = "/deviceManagement/windowsAutopilotDeviceIdentities"
