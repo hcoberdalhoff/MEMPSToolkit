@@ -561,7 +561,7 @@ function Remove-AADGroupMember {
 #endregion 
 
 #region devices
-function Get-AadDevices {
+function Get-AADDevices {
     param (
         [string]$deviceId,
         $authToken = $null,
@@ -578,7 +578,7 @@ function Get-AadDevices {
 }
 
 # Be aware - Only work with "delegated" permissions
-function Disable-AadDevice {
+function Disable-AADDevice {
     param (
         [Parameter(Mandatory = $true)]
         [string] $ObjectId,
@@ -594,7 +594,7 @@ function Disable-AadDevice {
 
 }
 
-function Remove-AadDevice {
+function Remove-AADDevice {
     param (
         [Parameter(Mandatory = $true)]
         [string] $ObjectId,
@@ -766,7 +766,7 @@ function Update-AADUserPhoneAuthMethod {
 # This will reset a user's password. The new password will be returned in clear text(!). The user should immediately change that password.
 #
 # Currently only available in MS Graph BETA Api
-function Get-AadUserPasswordAuthMethods {
+function Get-AADUserPasswordAuthMethods {
     param (
         $authToken = $null,
         [Parameter(Mandatory = $true)]
@@ -779,7 +779,7 @@ function Get-AadUserPasswordAuthMethods {
     Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource ($resource + "/" + $userID + "/authentication/passwordMethods") -authToken $authToken -onlyValues $true
 }
 
-function update-AadUserProperty {
+function Update-AADUserProperty {
     param (
         $authToken = $null,
         [Parameter(Mandatory = $true)]
@@ -804,7 +804,7 @@ function update-AadUserProperty {
 #
 # Currently only available in MS Graph BETA Api
 # Currently not supported using AppPermissions, only in delegated operation.
-function Reset-AadUserPasswordAuthMethod {
+function Reset-AADUserPasswordAuthMethod {
     param (
         $authToken = $null,
         [Parameter(Mandatory = $true)]
@@ -813,7 +813,7 @@ function Reset-AadUserPasswordAuthMethod {
     )
     
     # Let us assume there is only one password per user, as described in https://docs.microsoft.com/en-us/graph/api/authentication-list-passwordmethods?view=graph-rest-beta&tabs=http
-    $method = Get-AadUserPasswordAuthMethods -authToken $authToken -userID $userID -prefix $prefix
+    $method = Get-AADUserPasswordAuthMethods -authToken $authToken -userID $userID -prefix $prefix
     if (-not $method) {
         throw "No password auth method found. Is this a regular user?"
     }
@@ -821,7 +821,7 @@ function Reset-AadUserPasswordAuthMethod {
     # Can not operate on blocked users. Check!
     if (-not (get-AADUserIsEnabled -authToken $authToken -userId $userID)) {
         # Make sure, user is enabled
-        update-AadUserProperty -userID $userID -property "accountEnabled" -value "True" -authToken $authToken
+        update-AADUserProperty -userID $userID -property "accountEnabled" -value "True" -authToken $authToken
     }
 
     $resource = "users"
@@ -830,7 +830,7 @@ function Reset-AadUserPasswordAuthMethod {
 }
 
 # Currently only possible with beta API
-function Get-AadUserTemporaryAccessPass {
+function Get-AADUserTemporaryAccessPass {
     param (
         $authToken = $null,
         [Parameter(Mandatory = $true)]
@@ -844,7 +844,7 @@ function Get-AadUserTemporaryAccessPass {
 }
 
 # Currently only possible with beta API
-function Remove-AadUserTemporaryAccessPass {
+function Remove-AADUserTemporaryAccessPass {
     param (
         $authToken = $null,
         [Parameter(Mandatory = $true)]
@@ -853,7 +853,7 @@ function Remove-AadUserTemporaryAccessPass {
     )
 
     # Current assumption: A user can only have one temp. access pass. But well, be safe.
-    $authId = Get-AadUserTemporaryAccessPass -authToken $authToken -userID $userID -prefix $prefix
+    $authId = Get-AADUserTemporaryAccessPass -authToken $authToken -userID $userID -prefix $prefix
 
     $resource = "users"
 
@@ -865,7 +865,7 @@ function Remove-AadUserTemporaryAccessPass {
 
 # Currently only possible with beta API
 # Currently does not implement "delayed start time"
-function New-AadUserTemporaryAccessPass {
+function New-AADUserTemporaryAccessPass {
     param (
         $authToken = $null,
         [Parameter(Mandatory = $true)]
@@ -876,7 +876,7 @@ function New-AadUserTemporaryAccessPass {
     )
 
     # Make sure no other temp. access pass exists
-    Remove-AadUserTemporaryAccessPass -authToken $authToken -userID $userID -prefix $prefix
+    Remove-AADUserTemporaryAccessPass -authToken $authToken -userID $userID -prefix $prefix
 
     $resource = "users"
 
@@ -896,7 +896,7 @@ function New-AadUserTemporaryAccessPass {
 
 #region identityProtection
 
-function get-RiskyUsers {
+function Get-RiskyUsers {
     param(
         $authToken = $null,
         $prefix = "https://graph.microsoft.com/v1.0"
@@ -907,7 +907,7 @@ function get-RiskyUsers {
     Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource $resource -authToken $authToken -onlyValues $true
 }
 
-function set-DismissRiskyUser {
+function Set-DismissRiskyUser {
     param(
         $authToken = $null,
         [Parameter(Mandatory = $true)]
@@ -922,7 +922,7 @@ function set-DismissRiskyUser {
     Invoke-GraphRestRequest -method "POST" -prefix $prefix -resource $resource -body $body -authToken $authToken -onlyValues $false
 }
 
-function set-ConfirmCompromisedRiskyUser {
+function Set-ConfirmCompromisedRiskyUser {
     param(
         $authToken = $null,
         [Parameter(Mandatory = $true)]
@@ -941,7 +941,7 @@ function set-ConfirmCompromisedRiskyUser {
 #region Users
 
 
-function get-AADUsers {
+function Get-AADUsers {
     param(
         $authToken = $null,
         $prefix = "https://graph.microsoft.com/V1.0/"
@@ -952,7 +952,7 @@ function get-AADUsers {
     Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource $resource -authToken $authToken -onlyValues $true
 }
 
-function get-AADUserIsEnabled {
+function Get-AADUserIsEnabled {
     param(
         $authToken = $null,
         $prefix = "https://graph.microsoft.com/V1.0/",
@@ -977,7 +977,7 @@ function get-AADUserIsEnabled {
     }
 }
 
-function get-AADUserByUPN {
+function Get-AADUserByUPN {
     param(
         $authToken = $null,
         $prefix = "https://graph.microsoft.com/V1.0/",
@@ -988,7 +988,7 @@ function get-AADUserByUPN {
     get-AADUserByID -authToken $authToken -prefix $prefix -userID $userName
 }
 
-function get-AADUserByID {
+function Get-AADUserByID {
     param(
         $authToken = $null,
         $prefix = "https://graph.microsoft.com/V1.0/",
@@ -1001,7 +1001,7 @@ function get-AADUserByID {
     Invoke-GraphRestRequest -method "GET" -prefix $prefix -resource ($resource + "/" + $userID ) -authToken $authToken -onlyValues $false
 }
 
-function remove-AadUserById {
+function Remove-AADUserById {
     param(
         $authToken = $null,
         $prefix = "https://graph.microsoft.com/V1.0/",
