@@ -27,7 +27,7 @@
 RootModule = 'MEMPSToolkit.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.17'
+ModuleVersion = '0.0.18'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -156,6 +156,7 @@ FunctionsToExport = @(
     "Add-ServicePrincipalByAppId",
     "Get-ServicePrincipalAppRoleAssignmentsById",
     "Add-ServicePrincipalAppRoleAssignment",
+    "Get-AADRoleById",
     "Add-ServicePrincipalPassword",
     "Get-AutopilotProfiles",
     "Get-ImportedMobileDevices",

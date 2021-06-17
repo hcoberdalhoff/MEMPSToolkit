@@ -114,7 +114,11 @@ function Get-AppLoginToken {
         $result = Invoke-RestMethod @LoginRequestParams
     }
     catch {
-        Write-Error $_.Exception
+        #Write-Output ("StatusCode:" + $_.Exception.Response.StatusCode.value__ ) 
+        #Write-Output ("StatusDescription:" + $_.Exception.Response.StatusDescription)
+        #Write-Output ("Message: " + $_.Exception.Message)
+        #Write-Output ("Inner Error: " + $_.ErrorDetails.Message)
+        Write-Error $_
         throw "Login with MS Graph API failed. See Error Log."
     }
 
@@ -321,16 +325,26 @@ function Invoke-GraphRestRequest {
 
     if ($prefix -eq "v1.0") {
         $prefix = "https://graph.microsoft.com/v1.0/"
-    } elseif ($prefix -eq "beta") {
+    }
+    elseif ($prefix -eq "beta") {
         $prefix = "https://graph.microsoft.com/beta/"
     }
 
     try {
         if ($writeToFile) {
+            # TODO: Handle paging
             $result = Invoke-RestMethod -Uri ($prefix + $resource) -Headers $authToken -Method $method -Body $body -ContentType "application/json" -OutFile $outfile
         }
         else {
             $result = Invoke-RestMethod -Uri ($prefix + $resource) -Headers $authToken -Method $method -Body $body -ContentType "application/json"
+
+            # Handle Paging
+            $newresult = $result
+            while ($newresult.PSObject.Properties.Name -contains "@odata.nextLink") {
+                # actively ignore other parameters
+                $newresult = Invoke-RestMethod -Uri ($newresult."@odata.nextLink") -Headers $authToken -Method $method -ContentType "application/json"
+                $result.value += $newresult.value
+            }
         }
     }
     catch {
@@ -1625,6 +1639,19 @@ function Add-ServicePrincipalAppRoleAssignment {
     $JSON = $permissionObject | ConvertTo-Json -Depth 6
 
     Invoke-GraphRestRequest -method "POST" -authToken $authToken -prefix $prefix -resource $resource -body $JSON -onlyValues $false
+}
+
+function Get-AADRoleById {
+    param(
+        $authToken = $null,
+        $prefix = "https://graph.microsoft.com/v1.0/",
+        $id = ""
+    )
+
+    $resource = "/directoryRoles/$id"
+
+    Invoke-GraphRestRequest -method GET -authToken $authToken -prefix $prefix -resource $resource -onlyValues $true
+
 }
 
 function Add-ServicePrincipalPassword {
