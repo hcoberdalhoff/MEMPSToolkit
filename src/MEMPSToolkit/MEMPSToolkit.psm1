@@ -1479,6 +1479,34 @@ function Get-DeviceConfigurationPolicySettingsById {
 
 #endregion
 
+function Get-AADRoleTemplateById {
+    param(
+        $authToken,
+        [Parameter(Mandatory = $true)]
+        $id
+    )
+
+    Invoke-GraphRestRequest -resource "/directoryRoleTemplates/$id" -onlyValues $false
+}
+
+function Get-ConditionalAccessNamedLocationById {
+    param(
+        $authToken,
+        [Parameter(Mandatory = $true)]
+        $id
+    )
+    Invoke-GraphRestRequest -resource "/identity/conditionalAccess/namedLocations/$id" -onlyValues $false
+}
+
+function Test-GUID {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $guidCandidate
+    )
+
+    [guid]::TryParse($guidCandidate, $([ref][guid]::Empty))
+}
+
 #region App registration and Service Principal
 
 # Get App registrations
