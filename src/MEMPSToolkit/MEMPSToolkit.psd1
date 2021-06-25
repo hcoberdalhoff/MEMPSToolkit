@@ -27,7 +27,7 @@
 RootModule = 'MEMPSToolkit.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.0.20'
+ModuleVersion = '0.0.21'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -190,7 +190,13 @@ FunctionsToExport = @(
     "Get-TeamsChannelMessages",
     "Get-TeamsChannelMessageById",
     "Get-TeamsChannelMessageHostedContents",
-    "Get-TeamsChannelMessageReplies"
+    "Get-TeamsChannelMessageReplies",
+    "Resolve-AppName",
+    "Resolve-Username",
+    "Resolve-Groupname",
+    "Resolve-RoleTemplateName",
+    "Resolve-ConditionalAccessNamedLocationById",
+    "Write-ConditionalAccessPolicyToMermaid"
     )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
