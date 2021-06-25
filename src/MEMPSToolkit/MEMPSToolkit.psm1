@@ -1486,7 +1486,7 @@ function Get-AADRoleTemplateById {
         $id
     )
 
-    Invoke-GraphRestRequest -resource "/directoryRoleTemplates/$id" -onlyValues $false
+    Invoke-GraphRestRequest -resource "/directoryRoleTemplates/$id" -onlyValues $false -authToken $authToken
 }
 
 function Get-ConditionalAccessNamedLocationById {
@@ -1495,7 +1495,7 @@ function Get-ConditionalAccessNamedLocationById {
         [Parameter(Mandatory = $true)]
         $id
     )
-    Invoke-GraphRestRequest -resource "/identity/conditionalAccess/namedLocations/$id" -onlyValues $false
+    Invoke-GraphRestRequest -resource "/identity/conditionalAccess/namedLocations/$id" -onlyValues $false -authToken $authToken
 }
 
 function Test-GUID {

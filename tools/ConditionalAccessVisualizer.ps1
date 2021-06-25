@@ -6,11 +6,11 @@
 #
 # Version 0.1
 
-Import-Module MEMPSToolkit -MinimumVersion "0.0.19"
+#Requires -Module @{ModuleName = "MEMPSToolkit"; ModuleVersion = "0.0.20" }
 
 param(
     # Use Get-AppLoginToken to authenticate to MS Graph
-    $authToken,
+    $authToken=$null,
     # Write HTML files (with mermaid rendered in the browser)
     [bool] $asHTML = $true,
     # Write Markdown. If both are present, HTML is prefered.
@@ -105,11 +105,11 @@ function Resolve-RoleTemplateName {
             '"' + $roleTemplate.displayName + '"'
         }
         else {
-            $_
+            $roleTemplateId
         }
     }
     else {
-        $_
+        $roleTemplateId
     }
 }
 
@@ -161,7 +161,7 @@ function Write-MermaidCAPol {
     }
 
     "graph LR;"
-    "id(`"$($pol.displayName)`") -----> state(state: $($pol.state))"
+    "id[`"$($pol.displayName)`"] -----> state[state: $($pol.state)]"
 
     if ($pol.conditions) {
         'id --> conditions'
@@ -174,7 +174,7 @@ function Write-MermaidCAPol {
 
                 $pol.conditions.applications.includeApplications | ForEach-Object {
                     
-                    "includeApplications --> a_$($_)($(Resolve-AppName -appId $_))"
+                    "includeApplications --> a_$($_)[$(Resolve-AppName -appId $_)]"
                 }
             }
 
@@ -183,7 +183,7 @@ function Write-MermaidCAPol {
 
                 $pol.conditions.applications.excludeApplications | ForEach-Object {
                     
-                    "excludeApplications --> a_$($_)($(Resolve-AppName -appId $_))"
+                    "excludeApplications --> a_$($_)[$(Resolve-AppName -appId $_)]"
                 }
             }
 
@@ -202,7 +202,7 @@ function Write-MermaidCAPol {
                 'users --> includeUsers'
 
                 $pol.conditions.users.includeUsers | ForEach-Object {
-                    "includeUsers --> u_$($_)($(Resolve-Username -userId $_ -authToken $authToken))"
+                    "includeUsers --> u_$($_)[$(Resolve-Username -userId $_ -authToken $authToken)]"
                 }
             }
 
@@ -210,7 +210,7 @@ function Write-MermaidCAPol {
                 'users --> excludeUsers'
 
                 $pol.conditions.users.excludeUsers | ForEach-Object {
-                    "excludeUsers --> u_$($_)($(Resolve-Username -userId $_ -authToken $authToken))"
+                    "excludeUsers --> u_$($_)[$(Resolve-Username -userId $_ -authToken $authToken)]"
                 }
             }
 
@@ -218,7 +218,7 @@ function Write-MermaidCAPol {
                 'users --> includeGroups'
 
                 $pol.conditions.users.includeGroups | ForEach-Object {
-                    "includeGroups --> g_$($_)($(Resolve-Groupname -groupId $_ -authToken $authToken))"
+                    "includeGroups --> g_$($_)[$(Resolve-Groupname -groupId $_ -authToken $authToken)]"
                 }
             }
 
@@ -226,7 +226,7 @@ function Write-MermaidCAPol {
                 'users --> excludeGroups'
 
                 $pol.conditions.users.excludeGroups | ForEach-Object {
-                    "excludeGroups --> g_$($_)($(Resolve-Groupname -groupId $_ -authToken $authToken))"
+                    "excludeGroups --> g_$($_)[$(Resolve-Groupname -groupId $_ -authToken $authToken)]"
                 }
             }
 
@@ -234,7 +234,7 @@ function Write-MermaidCAPol {
                 'users --> includeRoles'
 
                 $pol.conditions.users.includeRoles | ForEach-Object {
-                    "includeRoles --> r_$($_)($(Resolve-RoleTemplateName -roleTemplateId $_ -authToken $authToken))"
+                    "includeRoles --> r_$($_)[$(Resolve-RoleTemplateName -roleTemplateId $_ -authToken $authToken)]"
                 }
             }
 
@@ -242,7 +242,7 @@ function Write-MermaidCAPol {
                 'users --> excludeRoles'
 
                 $pol.conditions.users.excludeRoles | ForEach-Object {
-                    "excludeRoles --> r_$($_)($(Resolve-RoleTemplateName -roleTemplateId $_ -authToken $authToken))"
+                    "excludeRoles --> r_$($_)[$(Resolve-RoleTemplateName -roleTemplateId $_ -authToken $authToken)]"
                 }
             }
         }
@@ -262,7 +262,7 @@ function Write-MermaidCAPol {
                 'locations --> includeLocations'
             
                 $pol.conditions.locations.includeLocations | ForEach-Object {
-                    "includeLocations --> l_$($_)($(Resolve-ConditionalAccessNamedLocationById -id $_ -authToken $authToken))"
+                    "includeLocations --> l_$($_)[$(Resolve-ConditionalAccessNamedLocationById -id $_ -authToken $authToken)]"
                 }
             }        
 
@@ -270,7 +270,7 @@ function Write-MermaidCAPol {
                 'locations --> excludeLocations'
             
                 $pol.conditions.locations.excludeLocations | ForEach-Object {
-                    "excludeLocations --> l_$($_)($(Resolve-ConditionalAccessNamedLocationById -id $_ -authToken $authToken))"
+                    "excludeLocations --> l_$($_)[$(Resolve-ConditionalAccessNamedLocationById -id $_ -authToken $authToken)]"
                 }
             }        
         }
@@ -282,7 +282,7 @@ function Write-MermaidCAPol {
                 'platforms --> includePlatforms'
 
                 $pol.conditions.platforms.includePlatforms | ForEach-Object {
-                    "includePlatforms --> cap_$($_)($($_))"
+                    "includePlatforms --> cap_$($_)[$($_)]"
                 }
             }
 
@@ -290,7 +290,7 @@ function Write-MermaidCAPol {
                 'platforms --> excludePlatforms'
 
                 $pol.conditions.platforms.excludePlatforms | ForEach-Object {
-                    "excludePlatforms --> cap_$($_)($($_))"
+                    "excludePlatforms --> cap_$($_)[$($_)]"
                 }
             }
         }
@@ -299,7 +299,7 @@ function Write-MermaidCAPol {
             'conditions --> signInRiskLevels'
 
             $pol.conditions.signInRiskLevels | ForEach-Object {
-                "signInRiskLevels --> sirl_$($_)($($_))"
+                "signInRiskLevels --> sirl_$($_)[$($_)]"
             }
         }
 
@@ -307,20 +307,20 @@ function Write-MermaidCAPol {
             'conditions --> userRiskLevels'
 
             $pol.conditions.userRiskLevels | ForEach-Object {
-                "userRiskLevels --> url_$($_)($($_))"
+                "userRiskLevels --> url_$($_)[$($_)]"
             }
         }
     }
 
     if ($pol.grantControls) {
         'id ---> grantControls'
-        "grantControls --> grantControlsOperator(operator: $($pol.grantControls.operator))"
+        "grantControls --> grantControlsOperator[operator: $($pol.grantControls.operator)]"
 
         if ($pol.grantControls.builtInControls) {
             'grantControls --> builtInControls'
 
             $pol.grantControls.builtInControls | ForEach-Object {
-                "builtInControls --> bic_$($_)($($_))"
+                "builtInControls --> bic_$($_)[$($_)]"
             }
         }
 
@@ -328,7 +328,7 @@ function Write-MermaidCAPol {
             'grantControls --> customAuthenticationFactors'
 
             $pol.grantControls.customAuthenticationFactors | ForEach-Object {
-                "customAuthenticationFactors --> cam_$($_)($($_))"
+                "customAuthenticationFactors --> cam_$($_)[$($_)]"
             }
         }
 
@@ -336,7 +336,7 @@ function Write-MermaidCAPol {
             'grantControls --> termsOfUse'
 
             $pol.grantControls.termsOfUse | ForEach-Object {
-                "termsOfUse --> tou_$($_)($($_))"
+                "termsOfUse --> tou_$($_)[$($_)]"
             }
 
         } 
@@ -346,26 +346,26 @@ function Write-MermaidCAPol {
 
         if ($pol.sessionControls.applicationEnforcedRestrictions) {
             'sessionControls --> applicationEnforcedRestrictions'
-            "applicationEnforcedRestrictions --> applicationEnforcedRestrictionsIsEnabled(isEnabled: $($pol.sessionControls.applicationEnforcedRestrictions.isEnabled))"
+            "applicationEnforcedRestrictions --> applicationEnforcedRestrictionsIsEnabled[isEnabled: $($pol.sessionControls.applicationEnforcedRestrictions.isEnabled)]"
         }
 
         if ($pol.sessionControls.cloudAppSecurity) {
             'sessionControls --> cloudAppSecurity'
-            "cloudAppSecurity --> cloudAppSecurityTypeIsEnabled(isEnabled: $($pol.sessionControls.cloudAppSecurity.isEnabled))"
-            "cloudAppSecurity --> cloudAppSecurityType(cloudAppSecurityType: $($pol.sessionControls.cloudAppSecurity.cloudAppSecurityType))"
+            "cloudAppSecurity --> cloudAppSecurityTypeIsEnabled[isEnabled: $($pol.sessionControls.cloudAppSecurity.isEnabled)]"
+            "cloudAppSecurity --> cloudAppSecurityType[cloudAppSecurityType: $($pol.sessionControls.cloudAppSecurity.cloudAppSecurityType)]"
         }
 
         if ($pol.sessionControls.persistentBrowser) {
             'sessionControls --> persistentBrowser'
-            "persistentBrowser --> persistentBrowserIsEnabled(isEnabled: $($pol.sessionControls.persistentBrowser.isEnabled))"
-            "persistentBrowser --> persistentBrowserSessionMode(mode: $($pol.sessionControls.persistentBrowser.mode))"
+            "persistentBrowser --> persistentBrowserIsEnabled[isEnabled: $($pol.sessionControls.persistentBrowser.isEnabled)]"
+            "persistentBrowser --> persistentBrowserSessionMode[mode: $($pol.sessionControls.persistentBrowser.mode)]"
         }
 
         if ($pol.sessionControls.signInFrequency) {
             'sessionControls --> signInFrequency'
-            "signInFrequency --> signInFrequencyIsEnabled(isEnabled: $($pol.sessionControls.signInFrequency.isEnabled))"
-            "signInFrequency --> signinFrequencyType(type: $($pol.sessionControls.signInFrequency.type))"
-            "signInFrequency --> signinFrequencyValue(value: $($pol.sessionControls.signInFrequency.value))"
+            "signInFrequency --> signInFrequencyIsEnabled[isEnabled: $($pol.sessionControls.signInFrequency.isEnabled)]"
+            "signInFrequency --> signinFrequencyType[type: $($pol.sessionControls.signInFrequency.type)]"
+            "signInFrequency --> signinFrequencyValue[value: $($pol.sessionControls.signInFrequency.value)]"
         }
     }
 
