@@ -2156,6 +2156,11 @@ function Resolve-AppName {
         [string]$appId
     )
 
+    # Ignore empty AppId
+    if (-not $appId) {
+        return
+    }
+
     # Well known Office apps:
     $appMapping = @{
         "00000002-0000-0000-c000-000000000000" = "AAD Graph API"	
@@ -2175,7 +2180,7 @@ function Resolve-AppName {
         $appMapping[$appId]
     }
     else {
-        $app = Invoke-GraphRestRequest -authToken $authToken -resource "/applications?`$filter=appId eq '$appId'"
+        $app = Invoke-GraphRestRequest -authToken $authToken -resource "/applications?`$filter=appId eq '$appId'" -ErrorAction SilentlyContinue
         if ($app) {
             $app.displayName
         }
