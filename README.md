@@ -93,6 +93,10 @@ In the [samples](samples/) folder you will find short scripts, demonstrating
 - assigning roles/permissions to an AAD application
 - reading / creating AAD groups
 
+### Visualize Conditional Access Policies
+
+Have a look at my [blog article](https://notdoneyet.blog/powershell/aad/security/2021/06/29/Visualize-Cond-Acc-Pols.html) about using MEMPSToolkit to visualize your MS Conditional Access policies.
+
 ## PSGallery
 
 This module is available in the [PowerShell Gallery](https://www.powershellgallery.com/packages/MEMPSToolkit)
